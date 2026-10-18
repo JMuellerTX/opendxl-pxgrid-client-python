@@ -81,3 +81,23 @@ class EventCallbackTest(unittest.TestCase):
         session = {"state": "Started", "user": {"name": "root"}}
         TestCallback().on_event(_make_event(session))
         self.assertEqual([session], received)
+
+    def test_callbacks_ignore_malformed_or_non_dict_payloads(self):
+        received = []
+
+        class TestAnc(AncStatusCallback):
+            def _on_status_notification(self, status_dict):
+                received.append(status_dict)
+
+        class TestSession(IdentitySessionCallback):
+            def on_session(self, session_dict):
+                received.append(session_dict)
+
+        for raw in (b"not-json", b"null", b"[1, 2]", b'"str"', b"123"):
+            ev = Event("/mcafee/event/pxgrid/anc/status")
+            ev.payload = raw
+            TestAnc().on_event(ev)
+            TestSession().on_event(ev)
+
+        self.assertEqual([], received)
+

@@ -8,7 +8,7 @@ from dxlclient.callbacks import EventCallback
 class CallbackHelper:
     @staticmethod
     def append_base64_decoded_content(event_dict):
-        if 'content' in event_dict:
+        if isinstance(event_dict, dict) and 'content' in event_dict:
             content = event_dict['content']
             event_dict['content_base64'] = content
             if isinstance(content, str):
@@ -33,8 +33,12 @@ class AncStatusCallback(EventCallback):
         :param dxlclient.message.Event event: Message received for the event
             notification
         """
-        event_dict = MessageUtils.json_payload_to_dict(event)
-        self._on_status_notification(CallbackHelper.append_base64_decoded_content(event_dict))
+        try:
+            event_dict = MessageUtils.json_payload_to_dict(event)
+        except Exception:
+            return
+        if isinstance(event_dict, dict):
+            self._on_status_notification(CallbackHelper.append_base64_decoded_content(event_dict))
 
     def _on_status_notification(self, status_dict):
         """
@@ -96,8 +100,12 @@ class IdentitySessionCallback(EventCallback):
         :param dxlclient.message.Event event: Message received for the event
             notification
         """
-        event_dict = MessageUtils.json_payload_to_dict(event)
-        self.on_session(CallbackHelper.append_base64_decoded_content(event_dict))
+        try:
+            event_dict = MessageUtils.json_payload_to_dict(event)
+        except Exception:
+            return
+        if isinstance(event_dict, dict):
+            self.on_session(CallbackHelper.append_base64_decoded_content(event_dict))
 
     def on_session(self, session_dict):
         """
